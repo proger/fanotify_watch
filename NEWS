@@ -1,0 +1,40 @@
+0.5 (2013-04-11)
+----------------
+Improvements:
+ - Some code optimizations, thanks Yann Droneaud!
+ - power-usage-report: Use current powertop 2 (LP: #937703)
+ - power-usage-report: Use Python 3
+ - power-usage-report: Include "Process Device Activity" section from powertop
+
+0.4 (2012-02-21)
+----------------
+Improvements:
+ - Add power-usage-report script which uses fatrace and powertop-1.13 to
+   collect data about file accesses, wakeups, and device stats and generates a
+   developer/power-user oriented report which can be used for identifying power
+   usage problems.
+
+0.3 (2012-02-17)
+----------------
+Bug fixes:
+ - Fix --ignore-pid short option (-p, not -i) in --help.
+ - Tell apart closing for reading ("C") and closing for writing ("CW"). Point
+   this out in the manpage.
+
+0.2 (2012-02-15)
+----------------
+Improvements:
+ - --output does not overwrite already existing files.
+ - Some code cleanup and robustification, thanks Yann Droneaud!
+ - Proper handling of Control-C (SIGINT), thanks Yann Droneaud!
+ - When specifying --timestamp twice, print time as seconds since epoch, which
+   is easier for automatic post-processing.
+
+Bug fixes:
+ - Listen to "close" events as well.
+ - Simplify and robustify determination of path names. This also fixes the
+   races which led to many events being shown with device/inode only.
+
+0.1 (2012-02-07)
+----------------
+Initial version.
