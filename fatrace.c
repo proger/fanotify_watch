@@ -1,6 +1,8 @@
 /**
  * fatrace - Trace system wide file access events.
  *
+ * (C) 2013 Vladimir Kirillov <proger@hackndev.com>
+ *
  * (C) 2012 Canonical Ltd.
  * Author: Martin Pitt <martin.pitt@ubuntu.com>
  *
@@ -34,14 +36,13 @@
 #include <sys/time.h>
 
 /* command line options */
-static char* option_output = NULL;
-static long option_timeout = -1;
 static int option_current_mount = 0;
 static int option_timestamp = 0;
+static int option_decode_pids = 0;
 static pid_t ignored_pids[1024];
 static unsigned int ignored_pids_len = 0;
 
-/* --time alarm sets this to 0 */
+/* signal handler sets this to 0 */
 static volatile int running = 1;
 static volatile int signaled = 0;
 
@@ -89,23 +90,25 @@ print_event(const struct fanotify_event_metadata *data,
     static char pathname[PATH_MAX];
     struct stat st;
 
-    /* read process name */
-    snprintf (printbuf, sizeof (printbuf), "/proc/%i/comm", data->pid);
-    len = 0;
-    fd = open (printbuf, O_RDONLY);
-    if (fd >= 0) {
-        len = read (fd, procname, sizeof (procname));
-        while (len > 0 && procname[len-1] == '\n') {
-            len--;
+    if (option_decode_pids) {
+        /* read process name */
+        snprintf (printbuf, sizeof (printbuf), "/proc/%i/comm", data->pid);
+        len = 0;
+        fd = open (printbuf, O_RDONLY);
+        if (fd >= 0) {
+            len = read (fd, procname, sizeof (procname));
+            while (len > 0 && procname[len-1] == '\n') {
+                len--;
+            }
         }
+        if (len > 0) {
+            procname[len] = '\0';
+        } else {
+            strcpy (procname, "unknown");
+        }
+        if (fd >= 0)
+            close (fd);
     }
-    if (len > 0) {
-	procname[len] = '\0';
-    } else {
-        strcpy (procname, "unknown");
-    }
-    if (fd >= 0)
-	close (fd);
 
     /* try to figure out the path name */
     snprintf (printbuf, sizeof (printbuf), "/proc/self/fd/%i", data->fd);
@@ -128,7 +131,11 @@ print_event(const struct fanotify_event_metadata *data,
     } else if (option_timestamp == 2) {
         printf ("%li.%06li ", event_time->tv_sec, event_time->tv_usec);
     }
-    printf ("%s(%i): %s %s\n", procname, data->pid, mask2str (data->mask), pathname);
+
+    if (option_decode_pids)
+        printf ("%s(%i): %s %s\n", procname, data->pid, mask2str(data->mask), pathname);
+    else
+        printf ("%i: %s %s\n", data->pid, mask2str(data->mask), pathname);
 }
 
 /**
@@ -199,9 +206,8 @@ help (void)
 "\n"
 "Options:\n"
 "  -c, --current-mount\t\tOnly record events on partition/mount of current directory.\n"
-"  -o FILE, --output=FILE\tWrite events to a file instead of standard output.\n"
-"  -s SECONDS, --seconds=SECONDS\tStop after the given number of seconds.\n"
 "  -t, --timestamp\t\tAdd timestamp to events. Give twice for seconds since the epoch.\n"
+"  -n, --names\t\tDecode PIDs as names.\n"
 "  -p PID, --ignore-pid PID\tIgnore events for this process ID. Can be specified multiple times.\n"
 "  -h, --help\t\t\tShow help.");
 }
@@ -220,9 +226,8 @@ parse_args (int argc, char** argv)
 
     static struct option long_options[] = {
         {"current-mount", no_argument,       0, 'c'},
-        {"output",        required_argument, 0, 'o'},
-        {"seconds",       required_argument, 0, 's'},
         {"timestamp",     no_argument,       0, 't'},
+        {"names",         no_argument,       0, 'n'},
         {"ignore-pid",    required_argument, 0, 'p'},
         {"help",          no_argument,       0, 'h'},
         {0,               0,                 0,  0 }
@@ -237,18 +242,6 @@ parse_args (int argc, char** argv)
         switch (c) {
             case 'c':
                 option_current_mount = 1;
-                break;
-
-            case 'o':
-                option_output = strdup (optarg);
-                break;
-
-            case 's':
-                option_timeout = strtol (optarg, &endptr, 10);
-                if (*endptr != '\0' || option_timeout <= 0) {
-                    fputs ("Error: Invalid number of seconds\n", stderr);
-                    exit (1);
-                }
                 break;
 
             case 'p':
@@ -270,6 +263,10 @@ parse_args (int argc, char** argv)
                     fputs ("Error: --timestamp option can be given at most two times\n", stderr);
                     exit (1);
                 };
+                break;
+
+            case 'n':
+                option_decode_pids++;
                 break;
 
             case 'h':
@@ -354,17 +351,6 @@ main (int argc, char** argv)
         exit(1);
     }
 
-    /* output file? */
-    if (option_output) {
-        int fd = open (option_output, O_CREAT|O_WRONLY|O_EXCL, 0666);
-        if (fd < 0) {
-            perror ("Failed to open output file");
-            exit (1);
-        }
-        fflush (stdout);
-        dup2 (fd, STDOUT_FILENO);
-        close (fd);
-    }
 
     /* setup signal handler to cleanly stop the program */
     sa.sa_handler = signal_handler; 
@@ -373,18 +359,6 @@ main (int argc, char** argv)
     if (sigaction (SIGINT, &sa, NULL) < 0) {
         perror ("sigaction");
         exit (1);
-    }
-
-    /* set up --time alarm */
-    if (option_timeout > 0) {
-        sa.sa_handler = signal_handler; 
-        sigemptyset (&sa.sa_mask);
-        sa.sa_flags = 0;
-        if (sigaction (SIGALRM, &sa, NULL) < 0) {
-            perror ("sigaction");
-            exit (1);
-        }
-        alarm (option_timeout);
     }
 
     /* clear event time if timestamp is not required */
@@ -421,8 +395,11 @@ main (int argc, char** argv)
             close (data->fd);
             data = FAN_EVENT_NEXT (data, res);
         }
+        fflush(stdout);
     }
 
     return 0;
 } 
 
+
+// vim: sts=4 et sw=4
