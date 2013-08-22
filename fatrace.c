@@ -53,7 +53,7 @@ static volatile int signaled = 0;
  * Returns: decoded mask; only valid until the next call, do not free.
  */
 static const char*
-mask2str (uint64_t mask)
+mask2str(uint64_t mask)
 {
     static char buffer[10];
     int offset = 0;
@@ -66,6 +66,8 @@ mask2str (uint64_t mask)
         buffer[offset++] = 'W';
     if (mask & FAN_OPEN)
         buffer[offset++] = 'O';
+    if (mask & FAN_ONDIR)
+        buffer[offset++] = 'D';
     buffer[offset] = '\0';
 
     return buffer;
