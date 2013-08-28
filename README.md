@@ -1,4 +1,4 @@
-# fatrace
+# fanotify_watch
 
 This tool allows you watch filesystem events using Linux fanotify(7) API.
 It has a Mac brother http://github.com/proger/fsevent_watch.
@@ -19,14 +19,15 @@ The tool differs from the original in the following ways:
 * as usual, the tool is composable enough to be used to even develop itself
 
 ```
-% sudo ./fatrace -c | egrep --line-buffered "W $PWD.*\.[ch]$" | tee /dev/stderr | xargs -t -n1 -I% make
-10196: W /tank/proger/fatrace-0.5/fatrace.c
-10196: W /tank/proger/fatrace-0.5/fatrace.c
+% sudo ./fanotify_watch -c | egrep --line-buffered "W $PWD.*\.[ch]$" | tee /dev/stderr | xargs -t -n1 -I% make
+10196: W /tank/proger/fanotify_watch/fanotify_watch.c
+10196: W /tank/proger/fanotify_watch/fanotify_watch.c
 make
-cc -O2 -g -Wall -Wextra -Werror   -c -o fatrace.o fatrace.c
+cc -O2 -g -Wall -Wextra -Werror   -c -o fanotify_watch.o fanotify_watch.c
 ```
 
 ## Caveats
 
 * as of Linux 3.10 fanotify(7) needs you to be root (hence `sudo`)
+    * you can use suid binaries at your own risk though
 * GPL-3, sorry

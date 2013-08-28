@@ -1,9 +1,9 @@
 /**
- * fatrace - Trace system wide file access events.
+ * fanotify_watch - Trace system wide file access events.
  *
  * (C) 2013 Vladimir Kirillov <proger@hackndev.com>
  *
- * (C) 2012 Canonical Ltd.
+ * fanotify - (C) 2012 Canonical Ltd.
  * Author: Martin Pitt <martin.pitt@ubuntu.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -202,7 +202,7 @@ setup_fanotify(int fan_fd)
 static void
 help (void)
 {
-    puts ("Usage: fatrace [options...] \n"
+    puts ("Usage: fanotify_watch [options...] \n"
 "\n"
 "Options:\n"
 "  -c, --current-mount\t\tOnly record events on partition/mount of current directory.\n"
