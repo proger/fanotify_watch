@@ -34,4 +34,5 @@ cc  -o fanotify_watch fanotify_watch.o
     * note that some tools may write the file under a different name and then rename it, this may go unnoticed
 * as of Linux 3.10 fanotify(7) needs you to be root (hence `sudo`)
     * you can use suid binaries at your own risk though
+* fanotify(7) does not work on nfs and sshfs mounts (at least when i tested)
 * GPL-3, sorry
