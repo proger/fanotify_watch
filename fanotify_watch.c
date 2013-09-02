@@ -34,7 +34,8 @@
 #include <sys/stat.h>
 #include <sys/fanotify.h>
 #include <sys/time.h>
-
+#include <poll.h>
+ 
 /* command line options */
 static int option_current_mount = 0;
 static int option_timestamp = 0;
@@ -327,6 +328,8 @@ main (int argc, char** argv)
     struct fanotify_event_metadata *data;
     struct sigaction sa;
     struct timeval event_time;
+    struct pollfd pollfds[2];
+    static int pollevents = POLLIN | POLLPRI | POLLERR | POLLHUP;
 
     /* always ignore events from ourselves (writing log file) */
     ignored_pids[ignored_pids_len++] = getpid();
@@ -367,8 +370,31 @@ main (int argc, char** argv)
         memset(&event_time, 0, sizeof(struct timeval));
     }
 
+    fcntl(0, F_SETFL, O_NONBLOCK);
+    fcntl(fan_fd, F_SETFL, O_NONBLOCK);
+
+    pollfds[0].fd = 0;
+    pollfds[0].events = pollevents;
+    pollfds[1].fd = fan_fd;
+    pollfds[1].events = pollevents;
+
     /* read all events in a loop */
     while (running) {
+        int nready = poll (pollfds, 2, 0);
+        if (nready == -1 && (errno == EINTR || errno == EAGAIN))
+            continue;
+
+        if (pollfds[0].revents) {
+            char buf[1024];
+            int nr = read (0, buf, 1024);
+            if (nr == 0 || (nr == -1 && errno != EINTR))
+                exit (0);
+        }
+
+        if (!pollfds[1].revents) {
+            continue;
+        }
+
         res = read (fan_fd, buffer, 4096);
         if (res == 0) {
             fprintf (stderr, "No more fanotify event (EOF)\n");
