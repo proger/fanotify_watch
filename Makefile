@@ -11,5 +11,6 @@ clean:
 
 install: $(PROG)
 	install -m 755 -D $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
+	chmod +s $(DESTDIR)$(PREFIX)/bin/$(PROG) # BEWARE
 
 .PHONY: clean install
