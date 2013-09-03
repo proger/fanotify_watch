@@ -380,7 +380,7 @@ main (int argc, char** argv)
 
     /* read all events in a loop */
     while (running) {
-        int nready = poll (pollfds, 2, 0);
+        int nready = poll (pollfds, 2, -1);
         if (nready == -1 && (errno == EINTR || errno == EAGAIN))
             continue;
 
