@@ -35,7 +35,7 @@
 #include <sys/fanotify.h>
 #include <sys/time.h>
 #include <poll.h>
- 
+
 /* command line options */
 static int option_current_mount = 0;
 static int option_timestamp = 0;
@@ -120,21 +120,24 @@ print_event(const struct fanotify_event_metadata *data,
             perror ("stat");
             exit (1);
         }
-        snprintf (pathname, sizeof (pathname), "device %i:%i inode %ld\n", major (st.st_dev), minor (st.st_dev), st.st_ino);
+        snprintf (pathname, sizeof (pathname), "device %i:%i inode %ld\n",
+                  major (st.st_dev), minor (st.st_dev), st.st_ino);
     } else {
         pathname[len] = '\0';
     }
 
     /* print event */
     if (option_timestamp == 1) {
-        strftime (printbuf, sizeof (printbuf), "%H:%M:%S", localtime (&event_time->tv_sec));
+        strftime (printbuf, sizeof (printbuf), "%H:%M:%S",
+                  localtime (&event_time->tv_sec));
         printf ("%s.%06li ", printbuf, event_time->tv_usec);
     } else if (option_timestamp == 2) {
         printf ("%li.%06li ", event_time->tv_sec, event_time->tv_usec);
     }
 
     if (option_decode_pids)
-        printf ("%s(%i)\t%s\t%s\n", procname, data->pid, mask2str(data->mask), pathname);
+        printf ("%s(%i)\t%s\t%s\n", procname, data->pid,
+                mask2str(data->mask), pathname);
     else
         printf ("%i\t%s\t%s\n", data->pid, mask2str(data->mask), pathname);
 }
@@ -154,11 +157,11 @@ setup_fanotify(int fan_fd)
     FILE* mounts;
     struct mntent* mount;
 
-    int famask = //FAN_MODIFY | 
+    int famask = //FAN_MODIFY |
         FAN_EVENT_ON_CHILD | FAN_CLOSE_WRITE;
-    
+
     if (option_current_mount) {
-        res = fanotify_mark (fan_fd, FAN_MARK_ADD | FAN_MARK_MOUNT, 
+        res = fanotify_mark (fan_fd, FAN_MARK_ADD | FAN_MARK_MOUNT,
                 famask, AT_FDCWD, ".");
         if (res < 0) {
             fprintf(stderr, "Failed to add watch for current directory: %s\n", strerror (errno));
@@ -185,7 +188,7 @@ setup_fanotify(int fan_fd)
         }
 
         //printf("Adding watch for %s mount %s\n", mount->mnt_type, mount->mnt_dir);
-        res = fanotify_mark (fan_fd, FAN_MARK_ADD | FAN_MARK_MOUNT, 
+        res = fanotify_mark (fan_fd, FAN_MARK_ADD | FAN_MARK_MOUNT,
                 famask, AT_FDCWD, mount->mnt_dir);
         if (res < 0) {
             fprintf(stderr, "Failed to add watch for %s mount %s: %s\n",
@@ -357,7 +360,7 @@ main (int argc, char** argv)
 
 
     /* setup signal handler to cleanly stop the program */
-    sa.sa_handler = signal_handler; 
+    sa.sa_handler = signal_handler;
     sigemptyset (&sa.sa_mask);
     sa.sa_flags = 0;
     if (sigaction (SIGINT, &sa, NULL) < 0) {
@@ -426,7 +429,7 @@ main (int argc, char** argv)
     }
 
     return 0;
-} 
+}
 
 
 // vim: sts=4 et sw=4
