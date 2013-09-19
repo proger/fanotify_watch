@@ -1,7 +1,7 @@
 PROG= fanotify_watch
 
 CFLAGS ?= -O2 -g -Wall -Wextra -Werror
-PREFIX ?= /usr/local
+PREFIX ?= /usr
 
 $(PROG): $(PROG).o
 	$(CC) $(LDFLAGS) -o $@ $<
