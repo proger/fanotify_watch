@@ -1,4 +1,4 @@
-fanotify-watch (0.1) UNRELEASED; urgency=low
+fanotify-watch (0.1) raring; urgency=low
 
   * Initial release. 
 
