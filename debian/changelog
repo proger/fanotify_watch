@@ -1,0 +1,5 @@
+fanotify-watch (0.1) UNRELEASED; urgency=low
+
+  * Initial release. 
+
+ -- Vladimir Kirillov <proger@hackndev.com>  Thu, 19 Sep 2013 09:42:59 +0000

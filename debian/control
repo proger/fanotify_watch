@@ -1,0 +1,12 @@
+Source: fanotify-watch
+Maintainer: Vladimir Kirillov <proger@hackndev.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 8)
+
+Package: fanotify-watch
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: github.com/proger/fanotify_watch
+
